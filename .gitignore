@@ -1,0 +1,9 @@
+node_modules/
+dist/
+*.log
+.env
+.env.*
+
+# 构建产物：离线单文件版由 npm run build 生成
+woof-standalone.html
+.claude/

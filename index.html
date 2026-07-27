@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta
+      name="description"
+      content="汪汪生成器 · Woof Generator — a procedural toon Chinese village dog you can shape, colour and play with."
+    />
+    <title>汪汪生成器 · Woof Generator</title>
+    <link rel="stylesheet" href="./src/style.css" />
+  </head>
+  <body>
+    <svg class="handdrawn-filters" aria-hidden="true">
+      <defs>
+        <filter id="handdrawn-wobble" x="-8%" y="-12%" width="116%" height="124%">
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency="0.016 0.045"
+            numOctaves="2"
+            seed="23"
+            result="paperNoise"
+          />
+          <feDisplacementMap
+            in="SourceGraphic"
+            in2="paperNoise"
+            scale="2.6"
+            xChannelSelector="R"
+            yChannelSelector="G"
+          />
+        </filter>
+        <filter id="handdrawn-wobble-soft" x="-5%" y="-8%" width="110%" height="116%">
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency="0.012 0.035"
+            numOctaves="2"
+            seed="31"
+            result="paperNoiseSoft"
+          />
+          <feDisplacementMap
+            in="SourceGraphic"
+            in2="paperNoiseSoft"
+            scale="1.35"
+            xChannelSelector="R"
+            yChannelSelector="G"
+          />
+        </filter>
+      </defs>
+    </svg>
+
+    <div id="app" class="dog-generator">
+      <main id="viewport">
+        <canvas id="dog-canvas" aria-label="三渲二程序化小狗生成画布"></canvas>
+
+        <div id="dog-model-badge" aria-live="polite">
+          <span>今天遇见</span>
+          <strong id="stage-action">一只小狗</strong>
+        </div>
+
+        <div id="dog-scene-tools">
+          <label class="dog-turn-tool" for="direction">
+            <span class="dog-turn-title">
+              <b>观察方向</b>
+              <output id="direction-output" for="direction">+45°</output>
+            </span>
+            <input id="direction" type="range" min="-90" max="90" step="1" value="45" />
+            <small><i>左侧</i><i>正面</i><i>右侧</i></small>
+          </label>
+        </div>
+
+        <div id="viewport-hint">拖动方向 · 揉捏小狗 · 拖拽玩具</div>
+      </main>
+
+      <aside id="panel">
+        <div class="mobile-panel-toolbar">
+          <div class="panel-actions">
+            <button id="randomize" class="btn primary" type="button">🐾 随机遇见小狗</button>
+            <button id="play-pause" class="btn dog-play-button" type="button" aria-label="停止摇尾巴">
+              ■ 让它坐好
+            </button>
+            <button id="codex-export" class="btn dog-export-button" type="button">
+              🐾 导出给 Codex
+            </button>
+          </div>
+          <p class="fork-credit">
+            🐾 本项目 fork 自
+            <a href="https://github.com/ringhyacinth/Meow-Generator" target="_blank" rel="noopener noreferrer">Meow&nbsp;Generator</a>
+            —— 建模内核、三渲二画风与整套界面语言都借鉴自这个猫猫生成器，
+            <a href="https://ringhyacinth.github.io/Meow-Generator/" target="_blank" rel="noopener noreferrer">先去玩玩它</a>。
+          </p>
+        </div>
+
+        <div id="controls">
+          <section class="section">
+            <h2>姿势</h2>
+            <p class="sub-label">中华田园犬的身体语言</p>
+            <div id="pose-presets" class="chips" aria-label="姿势"></div>
+          </section>
+
+          <section class="section">
+            <h2>体型</h2>
+            <div id="dog-controls"></div>
+          </section>
+
+          <section class="section">
+            <h2>毛发</h2>
+            <label class="slider-row dog-toggle-row" for="fluffy">
+              <span>炸毛</span>
+              <input id="fluffy" class="toggle-input" type="checkbox" />
+            </label>
+            <div id="dog-fur-controls"></div>
+          </section>
+
+          <section class="section">
+            <h2>耳朵与脸</h2>
+            <p class="sub-label">耳型</p>
+            <div id="ear-presets" class="chips" aria-label="耳型"></div>
+            <p class="sub-label">耳尖</p>
+            <div id="ear-tip-presets" class="chips" aria-label="耳尖形状"></div>
+            <div id="dog-face-controls"></div>
+            <label class="slider-row dog-toggle-row" for="eyebrow-dots">
+              <span>眉点（四眼）</span>
+              <input id="eyebrow-dots" class="toggle-input" type="checkbox" checked />
+            </label>
+            <label class="slider-row dog-toggle-row" for="tongue-out">
+              <span>吐舌头</span>
+              <input id="tongue-out" class="toggle-input" type="checkbox" checked />
+            </label>
+          </section>
+
+          <section class="section">
+            <h2>毛色</h2>
+            <p class="sub-label">常见花色</p>
+            <div id="coat-presets" class="chips" aria-label="毛色预设"></div>
+            <p class="experimental-note">
+              主色只染背上那块皮（鞍背）。肚子、胸口、四肢和口吻由底色决定，
+              所以换色不会把整只狗刷成一个颜色。
+            </p>
+            <label class="dog-color-row" for="saddle-color">
+              <span>背毛色</span>
+              <input id="saddle-color" class="color-input" type="color" value="#3b352f" aria-label="背毛色" />
+            </label>
+            <label class="dog-color-row" for="under-color">
+              <span>底色</span>
+              <input id="under-color" class="color-input" type="color" value="#c98a48" aria-label="腹部与四肢底色" />
+            </label>
+            <p class="sub-label">眼睛</p>
+            <div id="eye-presets" class="chips" aria-label="眼睛颜色"></div>
+            <label class="dog-color-row" for="eye-color">
+              <span>自定义</span>
+              <input id="eye-color" class="color-input" type="color" value="#4a3122" aria-label="眼睛颜色" />
+            </label>
+          </section>
+
+          <section class="section">
+            <h2>场景与渲染</h2>
+            <details class="nested-disclosure control-group" open>
+              <summary>狗窝垫</summary>
+              <label class="slider-row dog-toggle-row" for="show-mat">
+                <span>显示垫子</span>
+                <input id="show-mat" class="toggle-input" type="checkbox" checked />
+              </label>
+              <button id="random-mat" class="section-action" type="button">随机垫子</button>
+            </details>
+            <details class="nested-disclosure control-group" open>
+              <summary>玩具</summary>
+              <label class="slider-row dog-toggle-row" for="show-toys">
+                <span>显示玩具</span>
+                <input id="show-toys" class="toggle-input" type="checkbox" checked />
+              </label>
+              <p class="dog-render-note">磨牙骨 · 网球 · 飞盘 · 编织绳 · 饭碗 · 吱吱猪 · 被叼走的拖鞋</p>
+              <button id="random-toys" class="section-action" type="button">重新摆放玩具</button>
+            </details>
+            <details class="nested-disclosure control-group">
+              <summary>三渲二</summary>
+              <p class="dog-render-note">SDF 造型 · 色阶明暗 · 手绘轮廓 · 正交镜头</p>
+            </details>
+            <p id="model-status" class="dog-model-status" role="status" aria-live="polite">正在准备小狗…</p>
+          </section>
+        </div>
+
+        <footer class="panel-footer">
+          <div class="panel-brand-footer">
+            <svg class="panel-footer-mark" viewBox="0 0 120 40" aria-label="汪汪生成器" role="img">
+              <g fill="currentColor">
+                <ellipse cx="14" cy="24" rx="7" ry="6" />
+                <ellipse cx="7" cy="14" rx="3.1" ry="4.2" transform="rotate(-18 7 14)" />
+                <ellipse cx="14.5" cy="10.5" rx="3.1" ry="4.4" />
+                <ellipse cx="22" cy="13.5" rx="3" ry="4.2" transform="rotate(16 22 13.5)" />
+              </g>
+              <text x="34" y="27" font-size="15" font-weight="900" fill="currentColor">Woof</text>
+            </svg>
+            <p class="footer-links">
+              <a href="https://github.com/guigulaoshi/Woof-Generator" target="_blank" rel="noopener noreferrer">本项目 GitHub</a>
+              ·
+              <a href="https://github.com/ringhyacinth/Meow-Generator" target="_blank" rel="noopener noreferrer">上游 Meow Generator</a>
+            </p>
+          </div>
+        </footer>
+      </aside>
+    </div>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
